@@ -1,0 +1,13 @@
+body{
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+h1{
+  font-weight: lighter;
+}
+svg{
+  background-color: #ddd;
+  width: 600px;
+  height: 400px;
+  margin: 10px 0;
+  display: block;
+}
