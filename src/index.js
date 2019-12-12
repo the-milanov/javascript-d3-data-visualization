@@ -44,6 +44,26 @@ function drawChart(data) {
   let chartWidth = chart.clientWidth;
   let chartHeight = chart.clientHeight;
   drawChartBase(chartWidth, chartHeight, min, max);
+  // Draw Currency Lines
+  let chartLines = document.querySelector("#chartLines");
+  let usdPolyline = document.querySelector("#USD");
+  let chfPolyline = document.querySelector("#CHF");
+  let gbpPolyline = document.querySelector("#GBP");
+  let margin = 20;
+  usdPolyline.setAttribute("points", "");
+  chfPolyline.setAttribute("points", "");
+  gbpPolyline.setAttribute("points", "");
+  for (const currencyIndex in currencyArray) {
+    let x =
+      margin +
+      (currencyIndex / (currencyArray.length - 1)) * (chartWidth - 2 * margin);
+    for (const key in currencyArray[currencyIndex]) {
+      let y =( chartHeight - margin) - (chartHeight - margin * 2) * ((currencyArray[currencyIndex][key]-min)/(max-min));
+      let lineElement = document.querySelector(`#${key}`);
+      let lineValue = lineElement.getAttribute("points");
+      lineElement.setAttribute("points", lineValue + " " + x + "," + y);
+    }
+  }
 }
 function drawChartBase(width, height, min, max) {
   let chartBase = document.querySelector("#chartBase");
@@ -72,7 +92,7 @@ function drawChartBase(width, height, min, max) {
 
   let textMin = document.createElementNS("http://www.w3.org/2000/svg", "text");
   textMin.setAttribute("x", margin);
-  textMin.setAttribute("y", height -  margin * 0.25);
+  textMin.setAttribute("y", height - margin * 0.25);
   textMin.setAttribute("style", "font-size: 10px;");
   textMin.textContent = min;
 
