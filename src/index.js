@@ -1,29 +1,34 @@
 import axios from "axios";
 
-let button = document.querySelector("#getDataBtn");
-button.addEventListener("click", getData);
 let chart = document.querySelector("#chart");
+let chartLinesGroup = document.querySelector("#chartLines");
+let chartBaseGroup = document.querySelector("#chartBase");
+let chartLabels = document.querySelectorAll("#chartLabels > *");
 
-let startInput = document.querySelector("#start");
-let endInput = document.querySelector("#end");
+let startDateInput = document.querySelector("#start");
+let endDateInput = document.querySelector("#end");
+
+let actionButton = document.querySelector("#getDataBtn");
+actionButton.addEventListener("click", getData);
+
 let baseUrl = "https://api.exchangeratesapi.io/history";
+let margin = 20;
 
 function getData() {
   axios
     .get(
-      `${baseUrl}?start_at=${startInput.value}&end_at=${endInput.value}&symbols=USD,GBP,CHF`
+      `${baseUrl}?start_at=${startDateInput.value}&end_at=${endDateInput.value}&symbols=USD,GBP,CHF`
     )
     .then(r => drawChart(r.data.rates));
 }
 function drawChart(data) {
-  // Sort API data
-  let sortedData = {};
-  Object.keys(data)
-    .sort()
-    .forEach(key => (sortedData[key] = data[key]));
-  // Draw Chart
+  let sortedData = sortData(data);
+  let startDate = Object.keys(sortedData)[0];
+  let endDate = Object.keys(sortedData)[Object.keys(sortedData).length - 1];
+  
   let currencyArray = [];
   Object.keys(sortedData).forEach(k => currencyArray.push(sortedData[k]));
+  
   let min = currencyArray.reduce((min, curr) => {
     let currSmallest = Math.min(curr["USD"], curr["CHF"], curr["GBP"]);
     if (min < currSmallest) {
@@ -32,6 +37,7 @@ function drawChart(data) {
       return currSmallest;
     }
   }, Number.POSITIVE_INFINITY);
+  
   let max = currencyArray.reduce((max, curr) => {
     let currLargest = Math.max(curr["USD"], curr["CHF"], curr["GBP"]);
     if (max > currLargest) {
@@ -40,12 +46,16 @@ function drawChart(data) {
       return currLargest;
     }
   }, Number.NEGATIVE_INFINITY);
+  
   // Draw Chart Base
   let chartWidth = chart.clientWidth;
   let chartHeight = chart.clientHeight;
+  
   drawChartBase(chartWidth, chartHeight, min, max);
+  
+  writeChartLabels(chartWidth, chartHeight, min, max, startDate, endDate);
+  
   // Draw Currency Lines
-  let chartLines = document.querySelector("#chartLines");
   let usdPolyline = document.querySelector("#USD");
   let chfPolyline = document.querySelector("#CHF");
   let gbpPolyline = document.querySelector("#GBP");
@@ -58,47 +68,117 @@ function drawChart(data) {
       margin +
       (currencyIndex / (currencyArray.length - 1)) * (chartWidth - 2 * margin);
     for (const key in currencyArray[currencyIndex]) {
-      let y =( chartHeight - margin) - (chartHeight - margin * 2) * ((currencyArray[currencyIndex][key]-min)/(max-min));
+      let y =
+        chartHeight -
+        margin -
+        (chartHeight - margin * 2) *
+          ((currencyArray[currencyIndex][key] - min) / (max - min));
       let lineElement = document.querySelector(`#${key}`);
       let lineValue = lineElement.getAttribute("points");
       lineElement.setAttribute("points", lineValue + " " + x + "," + y);
     }
   }
 }
+
 function drawChartBase(width, height, min, max) {
-  let chartBase = document.querySelector("#chartBase");
-  let line1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  let margin = 20;
-  line1.setAttribute("x1", margin);
-  line1.setAttribute("y1", margin);
-  line1.setAttribute("x2", margin);
-  line1.setAttribute("y2", height - margin);
-  line1.setAttribute("stroke", "#333");
-  line1.setAttribute("stroke-width", 2);
+  let xAxis = createLine({
+    x1: margin,
+    y1: height - margin,
+    x2: width - margin,
+    y2: height - margin,
+    stroke: "#222",
+    "stroke-width": 2
+  });
+  let yAxis = createLine({
+    x1: margin,
+    y1: margin,
+    x2: margin,
+    y2: height - margin,
+    stroke: "#222",
+    "stroke-width": 2
+  });
+  let baseLines = [xAxis, yAxis];
 
-  let line2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
-  line2.setAttribute("x1", margin);
-  line2.setAttribute("y1", height - margin);
-  line2.setAttribute("x2", width - margin);
-  line2.setAttribute("y2", height - margin);
-  line2.setAttribute("stroke", "#333");
-  line2.setAttribute("stroke-width", 2);
+  let xBorder = createLine({
+    x1: margin,
+    y1: margin,
+    x2: width - margin,
+    y2: margin,
+    stroke: "#222",
+    "stroke-width": 2,
+    "stroke-dasharray": 5
+  });
+  let yBorder = createLine({
+    x1: width - margin,
+    y1: height - margin,
+    x2: width - margin,
+    y2: margin,
+    stroke: "#222",
+    "stroke-width": 2,
+    "stroke-dasharray": 5
+  });
+  baseLines.push(xBorder, yBorder);
 
-  let textMax = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  textMax.setAttribute("x", margin);
-  textMax.setAttribute("y", margin * 0.75);
-  textMax.setAttribute("style", "font-size: 10px;");
-  textMax.textContent = max;
+  for (let i = 1; i <= 3; i++) {
+    // Inner dashed, vertical & horizontal lines
+    baseLines.push(
+      createLine({
+        x1: margin,
+        y1: margin + ((height - margin * 2) / 4) * i,
+        x2: width - margin,
+        y2: margin + ((height - margin * 2) / 4) * i,
+        stroke: "#aaa",
+        "stroke-width": 2,
+        "stroke-dasharray": 5
+      })
+    );
+    baseLines.push(
+      createLine({
+        x1: margin + ((width - margin * 2) / 4) * i,
+        y1: margin,
+        x2: margin + ((width - margin * 2) / 4) * i,
+        y2: height - margin,
+        stroke: "#aaa",
+        "stroke-width": 2,
+        "stroke-dasharray": 5
+      })
+    );
+  }
 
-  let textMin = document.createElementNS("http://www.w3.org/2000/svg", "text");
-  textMin.setAttribute("x", margin);
-  textMin.setAttribute("y", height - margin * 0.25);
-  textMin.setAttribute("style", "font-size: 10px;");
-  textMin.textContent = min;
+  chartBaseGroup.innerHTML = "";
+  for (const line of baseLines) {
+    chartBaseGroup.appendChild(line);
+  }
+}
 
-  chartBase.innerHTML = "";
-  chartBase.appendChild(line1);
-  chartBase.appendChild(line2);
-  chartBase.appendChild(textMax);
-  chartBase.appendChild(textMin);
+function createLine(lineData) {
+  let line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+  for (const key in lineData) {
+    line.setAttribute(key, lineData[key]);
+  }
+  return line;
+}
+function sortData(data) {
+  let sortedData = {};
+  Object.keys(data)
+    .sort()
+    .forEach(key => (sortedData[key] = data[key]));
+  return sortedData;
+}
+function writeChartLabels(width, height, min, max, start, end) {
+  for (let i = 0; i < 5; i++) {
+    chartLabels[i].textContent = (min + ((max - min) / 4) * i).toFixed(2);
+    chartLabels[i].setAttribute("x", margin + 3);
+    chartLabels[i].setAttribute(
+      "y",
+      height - margin - ((height - margin * 2) / 4) * i - 3
+    );
+  }
+  chartLabels[5].textContent = start;
+  chartLabels[5].setAttribute("x", margin);
+  chartLabels[5].setAttribute("y", height - 5);
+
+  chartLabels[6].textContent = end;
+  chartLabels[6].setAttribute("x", -margin + width);
+  chartLabels[6].setAttribute("y", height - 5);
 }

@@ -10,19 +10,31 @@
   <body>
     <h1>Line Chart with D3</h1>
     <ul>
-      <li style="color: blue">Base Currency EUR - Euro</li>
-      <li style="color: darkgreen;">USD - US Dollar</li>
-      <li style="color: brown;">CHF - Swiss Franc</li>
-      <li style="color: teal;">GBP - Great British Pound</li>
+      <li>Base EUR - Euro</li>
+      <li style="color: teal;">USD - US Dollar</li>
+      <li style="color: red;">CHF - Swiss Franc</li>
+      <li style="color: blue;">GBP - Great British Pound</li>
     </ul>
     <svg id="chart">
       <g id="chartBase"></g>
       <g id="chartLines">
-        <polyline id="USD" style="fill:transparent;stroke:darkgreen;stroke-width:3" />
-        <polyline id="CHF" style="fill:transparent;stroke:brown;stroke-width:3" />
-        <polyline id="GBP" style="fill:transparent;stroke:teal;stroke-width:3" />
+        <polyline id="USD" style="fill:transparent;stroke:teal;stroke-width:1.5" />
+        <polyline id="CHF" style="fill:transparent;stroke:red;stroke-width:1.5" />
+        <polyline id="GBP" style="fill:transparent;stroke:blue;stroke-width:1.5" />
+      </g>
+      <g id="chartLabels">
+        <!-- Values-->
+        <text fill="#222" style="font-size: 9px;"></text>
+        <text fill="#222" style="font-size: 9px;"></text>
+        <text fill="#222" style="font-size: 9px;"></text>
+        <text fill="#222" style="font-size: 9px;"></text>
+        <text fill="#222" style="font-size: 9px;"></text>
+        <!-- Dates -->
+        <text fill="#222" style="font-size: 9px;"></text>
+        <text fill="#222" style="font-size: 9px; text-anchor: end;"></text>
       </g>
     </svg>
+
     <label for="start">Start date:</label>
     <input type="date" name="start" id="start" />
     <label for="end">End date:</label>
