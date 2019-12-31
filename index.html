@@ -9,7 +9,7 @@
   </head>
   <body>
     <h1>Line Chart with D3</h1>
-    <ul>
+    <ul id="legend">
       <li>Base EUR - Euro</li>
       <li style="color: teal;">USD - US Dollar</li>
       <li style="color: red;">CHF - Swiss Franc</li>
@@ -33,6 +33,7 @@
         <text fill="#222" style="font-size: 9px;"></text>
         <text fill="#222" style="font-size: 9px; text-anchor: end;"></text>
       </g>
+      <g id="hoverEvents"></g>
     </svg>
 
     <label for="start">Start date:</label>

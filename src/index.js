@@ -1,4 +1,5 @@
 import axios from "axios";
+import * as d3 from "d3";
 
 let chart = document.querySelector("#chart");
 let chartLinesGroup = document.querySelector("#chartLines");
@@ -21,14 +22,15 @@ function getData() {
     )
     .then(r => drawChart(r.data.rates));
 }
+let sortedData;
 function drawChart(data) {
-  let sortedData = sortData(data);
+  sortedData =  sortData(data);
   let startDate = Object.keys(sortedData)[0];
   let endDate = Object.keys(sortedData)[Object.keys(sortedData).length - 1];
-  
+
   let currencyArray = [];
   Object.keys(sortedData).forEach(k => currencyArray.push(sortedData[k]));
-  
+
   let min = currencyArray.reduce((min, curr) => {
     let currSmallest = Math.min(curr["USD"], curr["CHF"], curr["GBP"]);
     if (min < currSmallest) {
@@ -37,7 +39,7 @@ function drawChart(data) {
       return currSmallest;
     }
   }, Number.POSITIVE_INFINITY);
-  
+
   let max = currencyArray.reduce((max, curr) => {
     let currLargest = Math.max(curr["USD"], curr["CHF"], curr["GBP"]);
     if (max > currLargest) {
@@ -46,16 +48,25 @@ function drawChart(data) {
       return currLargest;
     }
   }, Number.NEGATIVE_INFINITY);
-  
+
   // Draw Chart Base
   let chartWidth = chart.clientWidth;
   let chartHeight = chart.clientHeight;
-  
+
   drawChartBase(chartWidth, chartHeight, min, max);
-  
+
   writeChartLabels(chartWidth, chartHeight, min, max, startDate, endDate);
-  
-  // Draw Currency Lines
+
+  drawChartLines(sortedData, currencyArray, chartWidth, chartHeight, min, max);
+}
+function drawChartLines(
+  sortedData,
+  currencyArray,
+  chartWidth,
+  chartHeight,
+  min,
+  max
+) {
   let usdPolyline = document.querySelector("#USD");
   let chfPolyline = document.querySelector("#CHF");
   let gbpPolyline = document.querySelector("#GBP");
@@ -78,8 +89,34 @@ function drawChart(data) {
       lineElement.setAttribute("points", lineValue + " " + x + "," + y);
     }
   }
+
+  document.querySelector("#hoverEvents").innerHTML = "";
+  d3.select("#hoverEvents")
+    .selectAll("rect")
+    .data(Object.keys(sortedData))
+    .enter()
+    .append("rect")
+    .attr("data-date", e => e)
+    .attr("x", (e, i) => margin + (chartWidth - margin*2)/(currencyArray.length)*i)
+    .attr("y", margin)
+    .attr("width", (e, i) => chartWidth/currencyArray.length)
+    .attr("height", chartHeight-margin*2)
+    .attr("fill","transparent")
+    .on("mouseover",updateLegend);
 }
 
+let legend = document.querySelector("#legend");
+let eurValueBase = legend.children[0].innerHTML;
+let usdValueBase = legend.children[1].innerHTML;
+let chfValueBase = legend.children[2].innerHTML;
+let gbpValueBase = legend.children[3].innerHTML;
+
+function updateLegend(date, index){
+  legend.children[0].innerHTML = `${eurValueBase} - ${date}` ;
+  legend.children[1].innerHTML = `${usdValueBase} - ${sortedData[date]["USD"]}`;
+  legend.children[2].innerHTML = `${chfValueBase} - ${sortedData[date]["CHF"]}`;
+  legend.children[3].innerHTML = `${gbpValueBase} - ${sortedData[date]["GBP"]}`;
+}
 function drawChartBase(width, height, min, max) {
   let xAxis = createLine({
     x1: margin,
@@ -128,7 +165,7 @@ function drawChartBase(width, height, min, max) {
         x2: width - margin,
         y2: margin + ((height - margin * 2) / 4) * i,
         stroke: "#aaa",
-        "stroke-width": 2,
+        "stroke-width": 1.5,
         "stroke-dasharray": 5
       })
     );
@@ -139,7 +176,7 @@ function drawChartBase(width, height, min, max) {
         x2: margin + ((width - margin * 2) / 4) * i,
         y2: height - margin,
         stroke: "#aaa",
-        "stroke-width": 2,
+        "stroke-width": 1.5,
         "stroke-dasharray": 5
       })
     );
